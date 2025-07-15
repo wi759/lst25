@@ -1,3 +1,22 @@
+// Form validation
+(function () {
+    'use strict'
+  
+    var forms = document.querySelectorAll('.needs-validation')
+  
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+  
+          form.classList.add('was-validated')
+        }, false)
+      })
+  })()
+
 // Helper function to get number value from input and convert to cents
 function getCentsValue(id) {
     const element = document.getElementById(id);
@@ -14,6 +33,11 @@ function getCentsValue(id) {
 
 document.getElementById('tax-form').addEventListener('submit', function (e) {
     e.preventDefault();
+
+    const form = e.target;
+    if (!form.checkValidity()) {
+        return;
+    }
 
     const data = {
         RE4: getCentsValue('RE4'),
@@ -51,7 +75,7 @@ document.getElementById('tax-form').addEventListener('submit', function (e) {
         ZMVB: parseInt(document.getElementById('ZMVB').value)
     };
 
-    fetch('http://127.0.0.1:8001/api/v1/calculate_payroll_tax', {
+    fetch('http://127.0.0.1:8000/api/v1/calculate_payroll_tax', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -69,7 +93,12 @@ document.getElementById('tax-form').addEventListener('submit', function (e) {
             document.getElementById('SOLZLZZ').textContent = (result.SOLZLZZ / 100).toFixed(2) + ' €';
             document.getElementById('BK').textContent = (result.BK / 100).toFixed(2) + ' €';
 
-            const total = (result.LSTLZZ + result.SOLZLZZ + result.BK) / 100;
+            // Convert Decimal strings to numbers for calculation
+            const lstlzz = parseFloat(result.LSTLZZ) || 0;
+            const solzlzz = parseFloat(result.SOLZLZZ) || 0;
+            const bk = parseFloat(result.BK) || 0;
+
+            const total = (lstlzz + solzlzz + bk) / 100;
             document.getElementById('TOTAL').textContent = total.toFixed(2) + ' €';
 
             document.getElementById('result').style.display = 'block';
