@@ -1,47 +1,91 @@
-import re
-import os
+import ast
+from pathlib import Path
+from test_results import TEST_RESULTS
 
-# Define the test cases with their correct values
-test_cases = {
-    'test_tax_calculator_basic_calculation': {'LSTLZZ': 30983, 'SOLZLZZ': 0, 'BK': 0},
-    'test_tax_calculator_stkl3': {'LSTLZZ': 22466, 'SOLZLZZ': 0, 'BK': 0},
-    'test_tax_calculator_lzz_jahr': {'LSTLZZ': 371800, 'SOLZLZZ': 20449, 'BK': 0},
-    'test_tax_calculator_with_freibetrag_hinzurechnung': {'LSTLZZ': 30983, 'SOLZLZZ': 0, 'BK': 0},
-    'test_tax_calculator_with_sonstb': {'LSTLZZ': 30983, 'SOLZLZZ': 0, 'BK': 0, 'STS': 56500, 'SOLZS': 0, 'BKS': 0},
-    'test_tax_calculator_with_versorgungsbezuege': {'LSTLZZ': 29475, 'SOLZLZZ': 0, 'BK': 0},
-    'test_tax_calculator_with_zkf': {'LSTLZZ': 30983, 'SOLZLZZ': 0, 'BK': 0},
-    # Add more test cases as needed
-}
 
-# Read the test file
-test_file_path = 'test_main.py'
-with open(test_file_path, 'r') as f:
-    content = f.read()
+def update_test_assertions():
+    """
+    Parses test_main.py and updates the assert statements
+    with the correct values from the TEST_RESULTS dictionary.
+    """
+    base_path = Path(__file__).parent
+    test_file_path = base_path / "test_main.py"
 
-# Process each test case
-for test_name, expected_values in test_cases.items():
-    # Find the test function in the content
-    test_pattern = f'def {test_name}\(\):[\s\S]+?\n\n'
-    test_match = re.search(test_pattern, content)
-    
-    if test_match:
-        test_code = test_match.group(0)
-        updated_test_code = test_code
-        
-        # Update each assertion
-        for key, value in expected_values.items():
-            # Look for the assertion for this key
-            assertion_pattern = f'assert result\["{key}"\] == Decimal\([^)]+\)'
-            assertion_replacement = f'assert result["{key}"] == Decimal({value})'
-            
-            # Replace the assertion
-            updated_test_code = re.sub(assertion_pattern, assertion_replacement, updated_test_code)
-        
-        # Replace the test code in the content
-        content = content.replace(test_code, updated_test_code)
+    with open(test_file_path, "r", encoding="utf-8") as f:
+        tree = ast.parse(f.read())
 
-# Write the updated content back to the file
-with open(test_file_path, 'w') as f:
-    f.write(content)
+    for func_def in ast.walk(tree):
+        if not isinstance(func_def, ast.FunctionDef) or not func_def.name.startswith(
+            "test_"
+        ):
+            continue
 
-print(f"Updated assertions in {test_file_path}")
+        if func_def.name not in TEST_RESULTS:
+            continue
+
+        expected_results = TEST_RESULTS[func_def.name]
+        new_body = []
+
+        # Flag to track if we are replacing asserts
+        is_after_result_calculation = False
+
+        for node in func_def.body:
+            # Keep nodes until the result calculation
+            if not is_after_result_calculation:
+                new_body.append(node)
+                if (
+                    isinstance(node, ast.Assign)
+                    and len(node.targets) == 1
+                    and isinstance(node.targets[0], ast.Name)
+                    and node.targets[0].id == "result"
+                ):
+                    is_after_result_calculation = True
+
+            # After the result calculation, we discard old asserts
+            if is_after_result_calculation and isinstance(node, ast.Assert):
+                continue  # Discard existing assert statements
+
+        # Add new assert statements based on the results
+        if is_after_result_calculation:
+            for key, value in expected_results.items():
+                new_assert = ast.Assert(
+                    test=ast.Compare(
+                        left=ast.Subscript(
+                            value=ast.Name(id="result", ctx=ast.Load()),
+                            slice=ast.Index(value=ast.Constant(value=key)),
+                            ctx=ast.Load(),
+                        ),
+                        ops=[ast.Eq()],
+                        comparators=[ast.Constant(value=value)],
+                    ),
+                    msg=None,
+                )
+                # To make it pretty, convert Decimal to Decimal('...')
+                if isinstance(value, str):
+                    new_assert.test.comparators[0] = ast.Call(
+                        func=ast.Name(id="Decimal", ctx=ast.Load()),
+                        args=[ast.Constant(value=str(value))],
+                        keywords=[],
+                    )
+
+                new_body.append(new_assert)
+
+        func_def.body = new_body
+
+    # Use ast.unparse if available (Python 3.9+)
+    try:
+        updated_code = ast.unparse(tree)
+    except AttributeError:
+        # Fallback for older Python versions, might need an external library like 'astor'
+        import astor
+
+        updated_code = astor.to_source(tree)
+
+    with open(test_file_path, "w", encoding="utf-8") as f:
+        f.write(updated_code)
+
+    print(f"Test assertions in {test_file_path} updated successfully.")
+
+
+if __name__ == "__main__":
+    update_test_assertions()

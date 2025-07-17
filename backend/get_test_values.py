@@ -8,7 +8,7 @@ test1_data = {
     "LZZ": 2,
     "ZKF": Decimal(0),
     "R": 0,
-    "KVZ": Decimal('1.7'),
+    "KVZ": Decimal("1.7"),
     "PVS": 0,
     "PVZ": 0,
     "PKV": 0,
@@ -35,7 +35,7 @@ test1_data = {
     "VBEZS": Decimal(0),
     "VBS": Decimal(0),
     "VJAHR": 0,
-    "ZMVB": 0
+    "ZMVB": 0,
 }
 
 # Test 2: STKL3
@@ -45,7 +45,7 @@ test2_data = {
     "LZZ": 2,
     "ZKF": Decimal(0),
     "R": 0,
-    "KVZ": Decimal('1.7'),
+    "KVZ": Decimal("1.7"),
     "PVS": 0,
     "PVZ": 0,
     "PKV": 0,
@@ -72,21 +72,21 @@ test2_data = {
     "VBEZS": Decimal(0),
     "VBS": Decimal(0),
     "VJAHR": 0,
-    "ZMVB": 0
+    "ZMVB": 0,
 }
 
 # Run test 1
 calc1 = TaxCalculator2025(**test1_data)
 result1 = calc1.calculate()
 print("Test 1 Results:")
-print(f'LSTLZZ: {result1["LSTLZZ"]}')
-print(f'SOLZLZZ: {result1["SOLZLZZ"]}')
-print(f'BK: {result1["BK"]}')
+print(f"LSTLZZ: {result1['LSTLZZ']}")
+print(f"SOLZLZZ: {result1['SOLZLZZ']}")
+print(f"BK: {result1['BK']}")
 
 # Run test 2
 calc2 = TaxCalculator2025(**test2_data)
 result2 = calc2.calculate()
 print("\nTest 2 Results:")
-print(f'LSTLZZ: {result2["LSTLZZ"]}')
-print(f'SOLZLZZ: {result2["SOLZLZZ"]}')
-print(f'BK: {result2["BK"]}')
+print(f"LSTLZZ: {result2['LSTLZZ']}")
+print(f"SOLZLZZ: {result2['SOLZLZZ']}")
+print(f"BK: {result2['BK']}")

@@ -6,19 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lohnsteuerrechner 2025</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        .nav-tabs .nav-link {
-            cursor: pointer;
-        }
-        .form-text {
-            font-size: 0.875em;
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #result, #result * {
+                visibility: visible;
+            }
+            #result {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">Lohnsteuerrechner 2025</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Lohnsteuerrechner 2025</h1>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-lightning"></i> Schnellauswahl
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="loadQuickScenario('single')">Alleinstehend, keine Kinder</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="loadQuickScenario('married')">Verheiratet, Steuerklasse III</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="loadQuickScenario('parent')">Alleinerziehend, 1 Kind</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="loadQuickScenario('family')">Verheiratet, 2 Kinder</a></li>
+                </ul>
+            </div>
+        </div>
         <form id="tax-form" novalidate>
             <ul class="nav nav-tabs" id="myTab" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -46,12 +70,19 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="RE4" class="form-label">Stpfl. Arbeitslohn für den
-                                    Lohnzahlungszeitraum</label>
-                                <input type="number" step="0.01" class="form-control" id="RE4" min="0" required>
+                                <label for="RE4" class="form-label">
+                                    Steuerpflichtiger Arbeitslohn für den Lohnzahlungszeitraum
+                                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" 
+                                       title="Ihr Bruttolohn ohne steuerfreie Zulagen wie Kindergeld oder Fahrkostenerstattung"></i>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" step="0.01" class="form-control" id="RE4" min="0" required 
+                                           placeholder="z.B. 3500.00">
+                                    <span class="input-group-text">€</span>
+                                </div>
                                 <div class="invalid-feedback">
                                     Bitte geben Sie einen gültigen Betrag ein.
-                                  </div>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="STKL" class="form-label">Steuerklasse</label>
@@ -74,7 +105,11 @@
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="ZKF" class="form-label">Zahl der Freibeträge für Kinder</label>
+                                <label for="ZKF" class="form-label">
+                                    Zahl der Freibeträge für Kinder
+                                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" 
+                                       title="0.5 = ein Kind bei getrennt lebenden Eltern, 1.0 = ein Kind, 2.0 = zwei Kinder, usw."></i>
+                                </label>
                                 <input type="number" step="0.5" class="form-control" id="ZKF" value="0" min="0">
                                 <div class="form-text">Geben Sie die Anzahl der Kinderfreibeträge an (z.B. 0, 0.5, 1, 1.5).</div>
                             </div>
@@ -137,7 +172,11 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="JFREIB" class="form-label">Jahresfreibetrag</label>
+                                <label for="JFREIB" class="form-label">
+                                    Jahresfreibetrag
+                                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" 
+                                       title="Ein vom Finanzamt eingetragener Jahresfreibetrag (z.B. für Werbungskosten, Sonderausgaben oder außergewöhnliche Belastungen)."></i>
+                                </label>
                                 <input type="number" step="0.01" class="form-control" id="JFREIB" value="0" min="0">
                                 <div class="form-text">Ein vom Finanzamt eingetragener Jahresfreibetrag (z.B. für Werbungskosten).</div>
                             </div>
@@ -148,7 +187,11 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="JHINZU" class="form-label">Jahreshinzurechnungsbetrag</label>
+                                <label for="JHINZU" class="form-label">
+                                    Jahreshinzurechnungsbetrag
+                                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" 
+                                       title="Ein vom Finanzamt eingetragener Jahreshinzurechnungsbetrag, der Ihr zu versteuerndes Einkommen erhöht."></i>
+                                </label>
                                 <input type="number" step="0.01" class="form-control" id="JHINZU" value="0" min="0">
                                 <div class="form-text">Ein vom Finanzamt eingetragener Jahreshinzurechnungsbetrag.</div>
                             </div>
@@ -164,7 +207,11 @@
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="SONSTB" class="form-label">Sonstige Bezüge</label>
+                                <label for="SONSTB" class="form-label">
+                                    Sonstige Bezüge
+                                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" 
+                                       title="Einmalige Zahlungen wie Weihnachtsgeld, Urlaubsgeld oder eine Abfindung."></i>
+                                </label>
                                 <input type="number" step="0.01" class="form-control" id="SONSTB" value="0" min="0">
                                 <div class="form-text">Z.B. Weihnachtsgeld, Urlaubsgeld.</div>
                             </div>
@@ -180,7 +227,11 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="JRE4" class="form-label">Voraussichtlicher Jahresarbeitslohn</label>
+                                <label for="JRE4" class="form-label">
+                                    Voraussichtlicher Jahresarbeitslohn
+                                    <i class="bi bi-info-circle tooltip-icon" data-bs-toggle="tooltip" 
+                                       title="Der gesamte Jahresbruttolohn. Erforderlich für die korrekte Versteuerung von sonstigen Bezügen."></i>
+                                </label>
                                 <input type="number" step="0.01" class="form-control" id="JRE4" value="0" min="0">
                                 <div class="form-text">Erforderlich für die korrekte Berechnung der Lohnsteuer auf sonstige Bezüge.</div>
                             </div>
@@ -262,33 +313,204 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-3">Berechnen</button>
+                    <div class="d-flex gap-2 mt-3 flex-wrap">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-calculator"></i> Berechnen
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-save" onclick="saveCalculation()">
+                            <i class="bi bi-save"></i> Speichern
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-load" onclick="showLoadDialog()">
+                            <i class="bi bi-folder-open"></i> Laden
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                            <i class="bi bi-arrow-clockwise"></i> Zurücksetzen
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" id="exportDropdown" disabled>
+                                <i class="bi bi-download"></i> Export
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportToPDF()">
+                                    <i class="bi bi-file-earmark-pdf"></i> Als PDF
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportToExcel()">
+                                    <i class="bi bi-file-earmark-excel"></i> Als Excel
+                                </a></li>
+                            </ul>
+                        </div>
+                        <button type="button" class="btn btn-outline-info" onclick="showComparisonDialog()" disabled id="compareBtn">
+                            <i class="bi bi-bar-chart"></i> Vergleichen
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="showHistoryDialog()">
+                            <i class="bi bi-clock-history"></i> Historie
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="showScenarioManager()">
+                            <i class="bi bi-collection"></i> Szenarien
+                        </button>
+                    </div>
+                </div>
+            </div>
         </form>
 
+        <!-- Speichern/Laden Dialog -->
+        <div class="modal fade" id="saveLoadModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="saveLoadModalTitle">Berechnung speichern</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="saveSection">
+                            <div class="mb-3">
+                                <label for="calculationName" class="form-label">Name der Berechnung:</label>
+                                <input type="text" class="form-control" id="calculationName" placeholder="z.B. Meine Lohnsteuer Januar 2025">
+                            </div>
+                        </div>
+                        <div id="loadSection" style="display: none;">
+                            <div class="saved-calculations">
+                                <div id="savedCalculationsList"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                        <button type="button" class="btn btn-primary" id="saveLoadButton" onclick="performSaveLoad()">Speichern</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="result" class="mt-5" style="display: none;">
-            <h2>Ergebnis</h2>
-            <table class="table">
-                <tbody>
-                    <tr>
-                        <th>Lohnsteuer</th>
-                        <td id="LSTLZZ"></td>
-                    </tr>
-                    <tr>
-                        <th>Solidaritätszuschlag</th>
-                        <td id="SOLZLZZ"></td>
-                    </tr>
-                    <tr>
-                        <th>Kirchensteuer</th>
-                        <td id="BK"></td>
-                    </tr>
-                    <tr>
-                        <th>Gesamtbelastung</th>
-                        <td id="TOTAL"></td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Berechnungsergebnis</h2>
+                <button class="btn btn-outline-primary no-print" onclick="printResult()">
+                    <i class="bi bi-printer"></i> Drucken
+                </button>
+            </div>
+            
+            <!-- Eingabe-Zusammenfassung -->
+            <div class="calculation-summary">
+                <h5><i class="bi bi-info-circle"></i> Berechnungsgrundlage</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Bruttolohn:</strong> <span id="summary-brutto"></span></p>
+                        <p><strong>Steuerklasse:</strong> <span id="summary-stkl"></span></p>
+                        <p><strong>Zeitraum:</strong> <span id="summary-lzz"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Kinderfreibeträge:</strong> <span id="summary-zkf"></span></p>
+                        <p><strong>Kirchensteuer:</strong> <span id="summary-kirche"></span></p>
+                        <p><strong>KV-Zusatzbeitrag:</strong> <span id="summary-kvz"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hauptergebnis -->
+            <div class="result-breakdown">
+                <div class="row">
+                    <div class="col-md-8">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Abzug</th>
+                                    <th class="text-end">Betrag</th>
+                                    <th class="text-end">Anteil</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Lohnsteuer</strong></td>
+                                    <td class="text-end" id="LSTLZZ"></td>
+                                    <td class="text-end" id="LSTLZZ-percent"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Solidaritätszuschlag</strong></td>
+                                    <td class="text-end" id="SOLZLZZ"></td>
+                                    <td class="text-end" id="SOLZLZZ-percent"></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kirchensteuer</strong></td>
+                                    <td class="text-end" id="BK"></td>
+                                    <td class="text-end" id="BK-percent"></td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td><strong>Gesamte Steuerbelastung</strong></td>
+                                    <td class="text-end" id="TOTAL"></td>
+                                    <td class="text-end" id="TOTAL-percent"></td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><strong>Nettolohn</strong></td>
+                                    <td class="text-end" id="NETTO"></td>
+                                    <td class="text-end" id="NETTO-percent"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <canvas id="taxChart" width="200" height="200"></canvas>
+                            <p class="mt-2 text-muted">Verteilung der Abzüge</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zusätzliche Informationen -->
+            <div class="mt-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Sozialversicherung (geschätzt)</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Krankenversicherung:</td>
+                                <td class="text-end" id="KV-estimate"></td>
+                            </tr>
+                            <tr>
+                                <td>Pflegeversicherung:</td>
+                                <td class="text-end" id="PV-estimate"></td>
+                            </tr>
+                            <tr>
+                                <td>Rentenversicherung:</td>
+                                <td class="text-end" id="RV-estimate"></td>
+                            </tr>
+                            <tr>
+                                <td>Arbeitslosenversicherung:</td>
+                                <td class="text-end" id="AV-estimate"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Jahreshochrechnung</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td>Jährliche Steuerbelastung:</td>
+                                <td class="text-end" id="YEAR-tax"></td>
+                            </tr>
+                            <tr>
+                                <td>Jährlicher Nettolohn:</td>
+                                <td class="text-end" id="YEAR-netto"></td>
+                            </tr>
+                            <tr>
+                                <td>Effektiver Steuersatz:</td>
+                                <td class="text-end" id="EFFECTIVE-rate"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="error" class="alert alert-danger mt-3" style="display: none;" role="alert"></div>
+
+        <div id="history-card" class="card mt-4" style="display: none;">
+            <div class="card-header">
+                Berechnungshistorie
+            </div>
+            <ul id="history-list" class="list-group list-group-flush">
+                <!-- History items will be injected here by JavaScript -->
+            </ul>
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>

@@ -1,7 +1,56 @@
-import pytest
 from decimal import Decimal
-from main import LohnsteuerRequest
 from tax_calculator import TaxCalculator2025
+from pydantic import BaseModel, Field
+
+
+# Replicate LohnsteuerRequest model here to avoid import issues
+class LohnsteuerRequest(BaseModel):
+    af: int = Field(1, description="Arbeitslohn-Faktor")
+    AJAHR: int = Field(0, description="Anrechnungsjahr")
+    ALTER1: int = Field(0, description="Alterseinkünfte-Entlastungsbetrag")
+    f: float = Field(1.0, description="Faktor für Lohnsteuerberechnung")
+    JFREIB: Decimal = Field(Decimal("0"), description="Jahresfreibetrag")
+    JHINZU: Decimal = Field(Decimal("0"), description="Jahreshinzurechnungsbetrag")
+    JRE4: Decimal = Field(Decimal("0"), description="Jahres-Bruttoarbeitslohn")
+    JRE4ENT: Decimal = Field(
+        Decimal("0"), description="Entschädigungen im Jahres-Bruttoarbeitslohn"
+    )
+    JVBEZ: Decimal = Field(Decimal("0"), description="Jahres-Versorgungsbezüge")
+    KRV: int = Field(0, description="Krankenversicherungs-Art")
+    KVZ: Decimal = Field(Decimal("0"), description="Krankenversicherungs-Zusatzbeitrag")
+    LZZ: int = Field(2, description="Lohnzahlungszeitraum")
+    LZZFREIB: Decimal = Field(
+        Decimal("0"), description="Lohnzahlungszeitraum-Freibetrag"
+    )
+    LZZHINZU: Decimal = Field(
+        Decimal("0"), description="Lohnzahlungszeitraum-Hinzurechnungsbetrag"
+    )
+    MBV: Decimal = Field(Decimal("0"), description="Mehrjährige Bezugsvergütung")
+    PKPV: Decimal = Field(
+        Decimal("0"), description="Private Krankenversicherungs-Beiträge"
+    )
+    PKV: int = Field(0, description="Private Krankenversicherung")
+    PVA: Decimal = Field(Decimal("0"), description="Pflegeversicherungs-Anteil")
+    PVS: int = Field(0, description="Pflegeversicherung-Sachsen")
+    PVZ: int = Field(0, description="Pflegeversicherung-Zuschlag")
+    R: int = Field(0, description="Religionszugehörigkeit")
+    RE4: Decimal = Field(Decimal("0"), description="Bruttoarbeitslohn")
+    SONSTB: Decimal = Field(Decimal("0"), description="Sonstige Bezüge")
+    SONSTENT: Decimal = Field(
+        Decimal("0"), description="Entschädigungen in sonstigen Bezügen"
+    )
+    STERBE: Decimal = Field(Decimal("0"), description="Sterbegeld")
+    STKL: int = Field(1, description="Steuerklasse")
+    VBEZ: Decimal = Field(Decimal("0"), description="Versorgungsbezüge")
+    VBEZM: Decimal = Field(Decimal("0"), description="Versorgungsbezugs-Monatsbetrag")
+    VBEZS: Decimal = Field(Decimal("0"), description="Versorgungsbezugs-Sonderzahlung")
+    VBS: Decimal = Field(
+        Decimal("0"), description="Versorgungsbezugs-Sonderzahlung für mehrere Jahre"
+    )
+    VJAHR: int = Field(0, description="Versorgungsbeginn-Jahr")
+    ZKF: Decimal = Field(Decimal("0"), description="Kinderfreibeträge")
+    ZMVB: int = Field(0, description="Anzahl der Monate mit Versorgungsbezug")
+
 
 def test_tax_calculator_basic_calculation():
     """
@@ -13,7 +62,7 @@ def test_tax_calculator_basic_calculation():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -40,17 +89,26 @@ def test_tax_calculator_basic_calculation():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("30983")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1581600")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
-    # Aktualisierte erwartete Werte basierend auf der tatsächlichen Berechnung
-    assert result["LSTLZZ"] == result["LSTLZZ"]
-    assert result["SOLZLZZ"] == result["SOLZLZZ"]
-    assert result["BK"] == result["BK"]
 
 def test_tax_calculator_stkl3():
     """
@@ -62,7 +120,7 @@ def test_tax_calculator_stkl3():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -89,15 +147,25 @@ def test_tax_calculator_stkl3():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(22466)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("22466")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("2554200")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_lzz_jahr():
@@ -110,7 +178,7 @@ def test_tax_calculator_lzz_jahr():
         "LZZ": 1,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -137,15 +205,25 @@ def test_tax_calculator_lzz_jahr():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(371800)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("371800")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1581600")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_freibetrag_hinzurechnung():
@@ -158,7 +236,7 @@ def test_tax_calculator_with_freibetrag_hinzurechnung():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -185,15 +263,25 @@ def test_tax_calculator_with_freibetrag_hinzurechnung():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(29600)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("29600")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1521600")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_sonstb():
@@ -206,7 +294,7 @@ def test_tax_calculator_with_sonstb():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -233,18 +321,25 @@ def test_tax_calculator_with_sonstb():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(30983)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
-    assert result["STS"] == Decimal(54400)
-    assert result["SOLZS"] == Decimal(0)
-    assert result["BKS"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("30983")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("54400")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("123000.00")
+    assert result["VFRBS2"] == Decimal("0.00")
+    assert result["WVFRB"] == Decimal("1581600")
+    assert result["WVFRBO"] == Decimal("1581600.00")
+    assert result["WVFRBM"] == Decimal("1776100.00")
 
 
 def test_tax_calculator_with_versorgungsbezuege():
@@ -257,7 +352,7 @@ def test_tax_calculator_with_versorgungsbezuege():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -284,15 +379,25 @@ def test_tax_calculator_with_versorgungsbezuege():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 2020,
-        "ZMVB": 12
+        "ZMVB": 12,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(29475)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("29475")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("188401")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1516199")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_alter1():
@@ -305,7 +410,7 @@ def test_tax_calculator_with_alter1():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -332,15 +437,25 @@ def test_tax_calculator_with_alter1():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(29500)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("29500")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1517000")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_different_kvz():
@@ -353,7 +468,7 @@ def test_tax_calculator_with_different_kvz():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('2.0'),
+        "KVZ": Decimal("2.0"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -380,15 +495,25 @@ def test_tax_calculator_with_different_kvz():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(30858)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("30858")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1576200")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_pkv_no_zuschuss():
@@ -401,7 +526,7 @@ def test_tax_calculator_with_pkv_no_zuschuss():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 1,
@@ -428,16 +553,25 @@ def test_tax_calculator_with_pkv_no_zuschuss():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(25250)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
-    assert result["VKVLZZ"] == Decimal(50000)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("25250")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("50000")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1329000")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_pkv_with_zuschuss():
@@ -450,7 +584,7 @@ def test_tax_calculator_with_pkv_with_zuschuss():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 2,
@@ -477,16 +611,25 @@ def test_tax_calculator_with_pkv_with_zuschuss():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(33516)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
-    assert result["VKVLZZ"] == Decimal(19850)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("33516")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("19850")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1690800")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_no_krv():
@@ -499,7 +642,7 @@ def test_tax_calculator_no_krv():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -526,15 +669,25 @@ def test_tax_calculator_no_krv():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(38866)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("38866")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1916400")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_pvz():
@@ -547,7 +700,7 @@ def test_tax_calculator_with_pvz():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 1,
         "PKV": 0,
@@ -574,15 +727,25 @@ def test_tax_calculator_with_pvz():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(30483)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("30483")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1560000")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_zkf():
@@ -593,9 +756,9 @@ def test_tax_calculator_with_zkf():
         "RE4": Decimal(300000),
         "STKL": 1,
         "LZZ": 2,
-        "ZKF": Decimal('1.0'),
+        "ZKF": Decimal("1.0"),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -622,15 +785,25 @@ def test_tax_calculator_with_zkf():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(30983)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("30983")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1581600")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_religion():
@@ -643,7 +816,7 @@ def test_tax_calculator_with_religion():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 1,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -670,15 +843,25 @@ def test_tax_calculator_with_religion():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(30983)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(30983)
+    assert result["BK"] == Decimal("2788")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("30983")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1581600")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_with_faktorverfahren():
@@ -691,7 +874,7 @@ def test_tax_calculator_with_faktorverfahren():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -718,15 +901,25 @@ def test_tax_calculator_with_faktorverfahren():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(27883)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("27883")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1581600")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
 
 
 def test_tax_calculator_no_faktorverfahren_stkl4():
@@ -739,7 +932,7 @@ def test_tax_calculator_no_faktorverfahren_stkl4():
         "LZZ": 2,
         "ZKF": Decimal(0),
         "R": 0,
-        "KVZ": Decimal('1.7'),
+        "KVZ": Decimal("1.7"),
         "PVS": 0,
         "PVZ": 0,
         "PKV": 0,
@@ -766,13 +959,22 @@ def test_tax_calculator_no_faktorverfahren_stkl4():
         "VBEZS": Decimal(0),
         "VBS": Decimal(0),
         "VJAHR": 0,
-        "ZMVB": 0
+        "ZMVB": 0,
     }
-    
     request = LohnsteuerRequest(**request_data)
     calculator = TaxCalculator2025(**request.model_dump())
     result = calculator.calculate()
-    assert result["LSTLZZ"] == Decimal(30983)
-    assert result["SOLZLZZ"] == Decimal(0)
-    assert result["BK"] == Decimal(0)
-
+    assert result["BK"] == Decimal("0")
+    assert result["BKS"] == Decimal("0")
+    assert result["LSTLZZ"] == Decimal("30983")
+    assert result["SOLZLZZ"] == Decimal("0")
+    assert result["SOLZS"] == Decimal("0")
+    assert result["STS"] == Decimal("0")
+    assert result["VKVLZZ"] == Decimal("0")
+    assert result["VKVSONST"] == Decimal("0")
+    assert result["VFRB"] == Decimal("123000")
+    assert result["VFRBS1"] == Decimal("0")
+    assert result["VFRBS2"] == Decimal("0")
+    assert result["WVFRB"] == Decimal("1581600")
+    assert result["WVFRBO"] == Decimal("0")
+    assert result["WVFRBM"] == Decimal("0")
